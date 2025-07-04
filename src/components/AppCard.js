@@ -9,8 +9,8 @@ function AppCard({ app, onRemove, listType, dragHandleProps, onUpdateObligation,
 
   const copyToClipboard = () => {
     if (appId && appId !== 'No ID') {
+      // The .then() that created the alert has been removed.
       navigator.clipboard.writeText(appId)
-        .then(() => alert(`Copied "${appId}" to clipboard!`))
         .catch(err => console.error('Failed to copy: ', err));
     }
   };
@@ -22,6 +22,7 @@ function AppCard({ app, onRemove, listType, dragHandleProps, onUpdateObligation,
           &times;
         </button>
       )}
+
       <div className="app-info" {...dragHandleProps}>
         <h4 className="app-name">{appName}</h4>
         {displayDates && (
@@ -30,6 +31,7 @@ function AppCard({ app, onRemove, listType, dragHandleProps, onUpdateObligation,
           </p>
         )}
       </div>
+
       <div className="app-actions">
         {listType !== 'Backlog' && (
           <div
