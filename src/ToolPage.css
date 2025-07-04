@@ -1,0 +1,56 @@
+.tool-page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background-color: #f4f7f9;
+}
+
+.tabs-nav {
+  display: flex;
+  border-bottom: 2px solid #e1e4e8;
+  padding: 0 20px;
+  background-color: #ffffff;
+  flex-shrink: 0;
+}
+
+.tabs-nav button {
+  padding: 12px 20px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #5E637A;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s ease-in-out;
+}
+
+.tabs-nav button.active {
+  color: #3C64F4;
+  border-bottom-color: #3C64F4;
+}
+
+.tab-content {
+  flex-grow: 1;
+  overflow: hidden;
+  position: relative; /* Needed for positioning panes */
+}
+
+/* New styles for tab panes */
+.tab-pane {
+  display: none; /* Hide inactive tabs by default */
+  width: 100%;
+  height: 100%;
+  position: absolute;
+}
+
+.tab-pane.active {
+  display: block; /* Show the active tab */
+}
+
+.iframe-container {
+    width: 100%;
+    height: 100%;
+}

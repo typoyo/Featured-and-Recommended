@@ -1,0 +1,197 @@
+/* --- SCOPED CONTAINER --- */
+.rec-app-container {
+    font-family: 'Source Sans Pro', sans-serif;
+    background-color: #f4f7f9;
+    padding: 20px;
+    color: #1A2433;
+    height: 100%;
+    overflow-y: hidden;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- LAYOUT --- */
+.rec-main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+}
+.rec-title {
+    font-size: 1.75rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+.rec-title .bds-icon {
+    margin-right: 12px;
+}
+.rec-main-content {
+    display: flex;
+    gap: 20px;
+    flex-grow: 1;
+    min-height: 0;
+}
+.rec-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+.rec-column.full-width {
+    flex-basis: 100%;
+}
+
+/* --- PANELS --- */
+.rec-panel {
+    background-color: #ffffff;
+    border: 1px solid #e1e1e1;
+    border-radius: 8px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.rec-panel-header {
+    padding: 10px 15px;
+    border-bottom: 1px solid #e1e1e1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.rec-panel-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+.rec-panel-title .bds-icon {
+    margin-right: 8px;
+}
+.rec-panel-body {
+    padding: 15px;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+.rec-panel-body.no-padding {
+    padding: 0;
+}
+.rec-panel-footer {
+    padding: 8px 15px;
+    text-align: center;
+    border-top: 1px solid #e1e1e1;
+}
+
+/* --- APP CARDS (NEW) --- */
+.rec-apps-list, .rec-panel-body .no-padding {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.rec-app-card {
+    background-color: #F6F7FC;
+    border: 1px solid #D9DCE9;
+    border-radius: 6px;
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+.rec-app-info {
+    flex-grow: 1;
+}
+.rec-app-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+}
+.rec-feature-dates {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin: 2px 0 0 0;
+}
+.rec-app-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.rec-app-id-button {
+    background-color: #3C64F4;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 5px;
+    padding: 3px 8px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.rec-action-button {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid #ced4da;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+.rec-action-button.add {
+    background-color: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+.rec-action-button.remove {
+    background-color: #e9ecef;
+    color: #495057;
+    font-size: 16px;
+}
+.rec-action-button.remove:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* --- FORMS AND BUTTONS --- */
+.rec-form-group { margin-bottom: 15px; }
+.rec-form-input-wrapper { display: flex; gap: 8px; }
+.rec-form-input {
+    flex-grow: 1;
+    height: 38px;
+    padding: 8px 12px;
+    border: 1px solid #D9DCE9;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+.rec-button {
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+}
+.rec-button.primary { background-color: #3C64F4; color: white; }
+.rec-button.secondary { border-color: #D9DCE9; background-color: #ffffff; }
+.rec-button.icon-only { padding: 0; width: 36px; }
+.rec-button.icon-only svg { width: 20px; height: 20px; }
+.rec-button-link { background: none; border: none; color: #3C64F4; cursor: pointer; }
+.is-syncing svg { animation: spin 1s linear infinite; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* --- MISC --- */
+.rec-placeholder-text {
+    text-align: center;
+    padding: 30px 0;
+    color: #67748B;
+}
