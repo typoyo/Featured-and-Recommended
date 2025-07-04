@@ -34,18 +34,15 @@ function FeaturedAppsManager() {
             console.error(err);
             return;
           }
-          // --- NEW, ROBUST SORTING LOGIC ---
           const statusOrder = { "Currently Featured": 1, "Up Next": 2, "Backlog": 3 };
           const sortedRecords = records.sort((a, b) => {
             const statusA = a.fields.Status;
             const statusB = b.fields.Status;
             const orderA = statusOrder[statusA] || 99;
             const orderB = statusOrder[statusB] || 99;
-
             if (orderA !== orderB) {
               return orderA - orderB;
             }
-
             if (statusA === 'Currently Featured' || statusA === 'Up Next') {
               return (a.fields.Queue_Order || 0) - (b.fields.Queue_Order || 0);
             }
@@ -100,10 +97,17 @@ function FeaturedAppsManager() {
         return;
       }
 
-      const newQueueOrder = upNextApps.length;
-      setApps(prevApps => prevApps.map(app =>
-        app.id === active.id ? { ...app, fields: { ...app.fields, Status: 'Up Next', Queue_Order: newQueueOrder } } : app
-      ));
+      // --- CORRECTED LOGIC ---
+      // Find the highest current order number and add 1
+      const maxOrder = Math.max(-1, ...upNextApps.map(app => app.fields.Queue_Order || 0));
+      const newQueueOrder = maxOrder + 1;
+
+      setApps(prevApps => {
+        const newApps = prevApps.map(app =>
+          app.id === active.id ? { ...app, fields: { ...app.fields, Status: 'Up Next', Queue_Order: newQueueOrder } } : app
+        );
+        return newApps.sort((a, b) => (a.fields.Queue_Order || 0) - (b.fields.Queue_Order || 0));
+      });
       base(process.env.REACT_APP_AIRTABLE_TABLE_NAME).update(active.id, {
         'Status': 'Up Next',
         'Queue_Order': newQueueOrder
@@ -181,7 +185,7 @@ function FeaturedAppsManager() {
           'Start Date': startDate.format('YYYY-MM-DD'),
           'End Date': endDate.format('YYYY-MM-DD'),
           'Featured Count': (app.fields['Featured Count'] || 0) + 1,
-          'Queue_Order': app.fields.Queue_Order // Keep the order
+          'Queue_Order': app.fields.Queue_Order
         }
       });
     });
