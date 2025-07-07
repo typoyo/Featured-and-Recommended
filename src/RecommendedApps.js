@@ -4,13 +4,15 @@ import './RecommendedApps.css';
 
 // --- Airtable Configuration ---
 const AIRTABLE_API_KEY = process.env.REACT_APP_AIRTABLE_PERSONAL_ACCESS_TOKEN;
-const AIRTABLE_BASE_ID = 'appkJQtIU04DiK9f5';
+// Use the new environment variable
+const AIRTABLE_BASE_ID = process.env.REACT_APP_RECOMMENDED_BASE_ID; 
 const APPS_TABLE_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/Apps`;
 const STATE_TABLE_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/State`;
 const airtableHeaders = {
     'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
     'Content-Type': 'application/json'
 };
+
 
 // --- Helper Component for App Items ---
 const AppItem = ({ app, type, date, onAction }) => {
