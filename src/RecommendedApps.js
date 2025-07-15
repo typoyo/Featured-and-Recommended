@@ -4,7 +4,6 @@ import './RecommendedApps.css';
 
 // --- Airtable Configuration ---
 const AIRTABLE_API_KEY = process.env.REACT_APP_AIRTABLE_PERSONAL_ACCESS_TOKEN;
-// Use the new environment variable
 const AIRTABLE_BASE_ID = process.env.REACT_APP_RECOMMENDED_BASE_ID; 
 const APPS_TABLE_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/Apps`;
 const STATE_TABLE_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/State`;
@@ -67,22 +66,37 @@ function RecommendedApps() {
     const fetchData = useCallback(async () => {
         setIsSyncing(true);
         try {
+            // Fetch Apps
             let allAppRecords = [];
             let offset = null;
             do {
                 const url = offset ? `${APPS_TABLE_URL}?offset=${offset}` : APPS_TABLE_URL;
                 const response = await fetch(url, { headers: airtableHeaders });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`Airtable 'Apps' Error: ${errorData.error?.message || response.statusText}`);
+                }
+
                 const data = await response.json();
-                allAppRecords.push(...data.records);
+                if (data && data.records) {
+                    allAppRecords.push(...data.records);
+                }
                 offset = data.offset;
             } while (offset);
             
             const uniqueApps = Array.from(new Map(allAppRecords.map(app => [app.fields.appId, app])).values());
             setMasterAppList(uniqueApps.map(r => ({ id: r.id, ...r.fields })));
 
+            // Fetch State
             const stateResponse = await fetch(STATE_TABLE_URL, { headers: airtableHeaders });
+            if (!stateResponse.ok) {
+                const errorData = await stateResponse.json();
+                throw new Error(`Airtable 'State' Error: ${errorData.error?.message || stateResponse.statusText}`);
+            }
+
             const stateData = await stateResponse.json();
-            if (stateData.records.length > 0) {
+            if (stateData && stateData.records && stateData.records.length > 0) {
                 const record = stateData.records[0];
                 setAppState({
                     recordId: record.id,
@@ -93,7 +107,7 @@ function RecommendedApps() {
             }
         } catch (error) {
             console.error("Error fetching data:", error);
-            alert("Could not fetch data from Airtable.");
+            alert(`Could not fetch data from Airtable. ${error.message}`);
         } finally {
             setIsSyncing(false);
         }
