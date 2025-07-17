@@ -5,7 +5,7 @@ import base from '../airtable';
 function CSVUploader({ apps, onUploadSuccess }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
-    const [isUploading, setIsUploading] = useState(false); // New state for loading indicator
+    const [isUploading, setIsUploading] = useState(false);
 
     const handleFileSelect = (e) => {
         setSelectedFile(e.target.files[0]);
@@ -17,7 +17,10 @@ function CSVUploader({ apps, onUploadSuccess }) {
             return;
         }
 
-        setIsUploading(true); // Start loading indicator
+        setIsUploading(true);
+
+        // --- NEW: Keywords to filter out ---
+        const ignoreKeywords = ['dev', 'staging', 'preproduction', 'qa'];
 
         Papa.parse(selectedFile, {
             header: true,
@@ -26,19 +29,33 @@ function CSVUploader({ apps, onUploadSuccess }) {
             complete: async (results) => {
                 const recordsToCreate = [];
                 const recordsToUpdate = [];
-                const existingAppsMap = new Map(
+
+                // Create maps for quick lookups of existing apps by both name and ID
+                const existingAppNames = new Map(
                     apps.map(app => [app.fields['App Name']?.toLowerCase(), app])
+                );
+                const existingAppIds = new Map(
+                    apps.map(app => [app.fields['App ID'], app])
                 );
 
                 for (const row of results.data) {
                     const appName = row['App Name']?.trim();
-                    if (!appName) continue;
+                    const appId = row['App ID']?.trim();
+
+                    if (!appName || !appId) continue; // Skip rows without a name or ID
 
                     const lowercasedAppName = appName.toLowerCase();
-                    const existingApp = existingAppsMap.get(lowercasedAppName);
+
+                    // --- NEW: Filter out rows containing ignore keywords ---
+                    const containsIgnoreKeyword = ignoreKeywords.some(keyword => lowercasedAppName.includes(keyword));
+                    if (containsIgnoreKeyword) {
+                        continue; // Skip this row
+                    }
+
+                    const existingApp = existingAppNames.get(lowercasedAppName) || existingAppIds.get(appId);
 
                     if (existingApp) {
-                        // Prepare an update record only if there's an image URL
+                        // If the app exists, prepare an update record only if there's an image URL
                         if (row['Image URL']) {
                             recordsToUpdate.push({
                                 id: existingApp.id,
@@ -46,11 +63,11 @@ function CSVUploader({ apps, onUploadSuccess }) {
                             });
                         }
                     } else {
-                        // Prepare a create record for a new app
+                        // If the app is new, prepare a create record
                         recordsToCreate.push({
                             fields: {
                                 'App Name': appName,
-                                'App ID': row['App ID'],
+                                'App ID': appId,
                                 'Partner Manager Name': row['Partner Manager Name'],
                                 'Image URL': row['Image URL'],
                                 'Featured Count': 0,
@@ -60,7 +77,6 @@ function CSVUploader({ apps, onUploadSuccess }) {
                     }
                 }
                 
-                // De-duplicate records before sending to Airtable
                 const uniqueRecordsToUpdate = Array.from(new Map(recordsToUpdate.map(record => [record.id, record])).values());
 
                 try {
@@ -83,7 +99,7 @@ function CSVUploader({ apps, onUploadSuccess }) {
                     console.error(err);
                     alert(`An error occurred during the upload.`);
                 } finally {
-                    setIsUploading(false); // Stop loading indicator
+                    setIsUploading(false);
                     onUploadSuccess();
                     setIsModalOpen(false);
                     setSelectedFile(null);
@@ -102,7 +118,6 @@ function CSVUploader({ apps, onUploadSuccess }) {
             <button className="upload-button" onClick={openModal}>
                 Upload CSV
             </button>
-
             {isModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
