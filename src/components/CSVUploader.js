@@ -20,7 +20,7 @@ function CSVUploader({ apps, onUploadSuccess }) {
         setIsUploading(true);
 
         // --- NEW: Expanded list of keywords to ignore ---
-        const ignoreKeywords = ['dev', 'staging', 'preproduction', 'qa', 'preprod', 'private'];
+        const ignoreKeywords = ['dev', 'staging', 'preproduction', 'qa', 'preprod', 'private', 'sandbox'];
 
         Papa.parse(selectedFile, {
             header: true,
@@ -29,7 +29,8 @@ function CSVUploader({ apps, onUploadSuccess }) {
             complete: async (results) => {
                 const recordsToCreate = [];
                 const recordsToUpdate = [];
-                const existingAppsMap = new Map(
+                
+                const existingAppNames = new Map(
                     apps.map(app => [app.fields['App Name']?.toLowerCase(), app])
                 );
                 const existingAppIds = new Map(
@@ -46,10 +47,11 @@ function CSVUploader({ apps, onUploadSuccess }) {
 
                     const containsIgnoreKeyword = ignoreKeywords.some(keyword => lowercasedAppName.includes(keyword));
                     if (containsIgnoreKeyword) {
-                        continue;
+                        continue; 
                     }
 
-                    const existingApp = existingAppsMap.get(lowercasedAppName) || existingAppIds.get(appId);
+                    // --- NEW: Prioritize matching by App ID first, then by App Name ---
+                    let existingApp = existingAppIds.get(appId) || existingAppsMap.get(lowercasedAppName);
 
                     if (existingApp) {
                         if (row['Image URL']) {
