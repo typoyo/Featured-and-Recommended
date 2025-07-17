@@ -29,7 +29,6 @@ function CSVUploader({ apps, onUploadSuccess }) {
                 const recordsToCreate = [];
                 const recordsToUpdate = [];
                 
-                // --- CORRECTED: Maps are defined here to be in the correct scope ---
                 const existingAppNames = new Map(
                     apps.map(app => [app.fields['App Name']?.toLowerCase(), app])
                 );
@@ -40,32 +39,40 @@ function CSVUploader({ apps, onUploadSuccess }) {
                 for (const row of results.data) {
                     const appName = row['App Name']?.trim();
                     const appId = row['App ID']?.trim();
+                    const imageUrl = row['Image URL']?.trim();
 
                     if (!appName || !appId) continue;
+
+                    // --- NEW: Skip if the Image URL is incomplete ---
+                    if (!imageUrl || imageUrl.endsWith('/')) {
+                        continue;
+                    }
 
                     const lowercasedAppName = appName.toLowerCase();
 
                     const containsIgnoreKeyword = ignoreKeywords.some(keyword => lowercasedAppName.includes(keyword));
                     if (containsIgnoreKeyword) {
-                        continue;
+                        continue; 
                     }
 
                     let existingApp = existingAppIds.get(appId) || existingAppNames.get(lowercasedAppName);
 
                     if (existingApp) {
-                        if (row['Image URL']) {
-                            recordsToUpdate.push({
-                                id: existingApp.id,
-                                fields: { 'Image URL': row['Image URL'] },
-                            });
-                        }
+                        recordsToUpdate.push({
+                            id: existingApp.id,
+                            fields: {
+                                'App Name': appName,
+                                'Partner Manager Name': row['Partner Manager Name'],
+                                'Image URL': imageUrl,
+                            },
+                        });
                     } else {
                         recordsToCreate.push({
                             fields: {
                                 'App Name': appName,
                                 'App ID': appId,
                                 'Partner Manager Name': row['Partner Manager Name'],
-                                'Image URL': row['Image URL'],
+                                'Image URL': imageUrl,
                                 'Featured Count': 0,
                                 'Feature Obligation': 1,
                             },
