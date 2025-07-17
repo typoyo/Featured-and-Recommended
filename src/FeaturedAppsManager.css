@@ -91,18 +91,16 @@ body {
 .app-card .app-info {
   flex-grow: 1;
   cursor: grab;
-  /* New: Use flexbox to align image and text */
   display: flex;
   align-items: center;
   gap: 12px;
-  min-width: 0; /* Prevents long text from pushing other elements */
+  min-width: 0;
 }
 
 .app-card .app-info:active {
   cursor: grabbing;
 }
 
-/* New: Wrapper for name and dates */
 .app-name-wrapper {
   display: flex;
   flex-direction: column;
@@ -115,13 +113,11 @@ body {
   color: #2c3e50;
   margin: 0;
   line-height: 1.2;
-  /* New: Prevent long text from wrapping badly */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* New: Style for long app names */
 .app-card .app-name.long-name {
   font-size: 0.95rem;
 }
@@ -203,6 +199,7 @@ body {
 .promote-button {
    background-color: #28a745;
 }
+
 
 .modal-overlay {
   position: fixed;
@@ -413,7 +410,6 @@ body {
   cursor: pointer;
 }
 
-/* --- New Styles for App Thumbnails --- */
 .app-thumbnail {
   width: 32px;
   height: 32px;
@@ -421,37 +417,28 @@ body {
   object-fit: cover;
   background-color: #e9ecef;
   border: 1px solid #dee2e6;
-  flex-shrink: 0; /* Prevents the image from shrinking */
+  flex-shrink: 0;
 }
 
-/* --- Login Styles --- */
-.login-modal {
-  max-width: 400px;
-}
-.login-error {
-  color: #D93F4C;
-  font-weight: 600;
-  text-align: center;
-  margin-top: 10px;
-}
-.login-footer-message {
-  font-size: 0.8rem;
-  color: #67748B;
-  text-align: center;
-  margin-top: 20px;
-  border-top: 1px solid #E4E8F0;
-  padding-top: 15px;
-}
-.logout-button {
-  position: absolute;
-  top: 15px;
-  right: 20px;
-  z-index: 2000;
-  background-color: #5E637A;
-  color: #fff;
-  border: none;
+.sync-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  color: #5E637A;
+  border: 1px solid #D9DCE9;
   padding: 8px 16px;
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sync-button:hover {
+  border-color: #3C64F4;
+  color: #3C64F4;
+}
+
+.sync-button .bds-icon {
+  font-size: 1.2em;
 }

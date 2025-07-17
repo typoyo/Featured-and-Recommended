@@ -103,7 +103,7 @@ function FeaturedAppsManager() {
 
       const maxOrder = Math.max(-1, ...upNextApps.map(app => app.fields.Queue_Order || 0));
       const newQueueOrder = maxOrder + 1;
-      
+
       setApps(prevApps => {
         const updatedApps = prevApps.map(app =>
           app.id === active.id ? { ...app, fields: { ...app.fields, Status: 'Up Next', Queue_Order: newQueueOrder } } : app
@@ -245,6 +245,9 @@ function FeaturedAppsManager() {
       <div className="app-container">
         <div className="main-header">
           <h1>Featured Apps Manager</h1>
+          <button onClick={fetchApps} className="sync-button" title="Force a new data sync from Airtable">
+            <i className="bds-icon bds-sync"></i> Sync
+          </button>
         </div>
         <div className="main-content">
           <div className="column">
