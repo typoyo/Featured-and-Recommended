@@ -19,8 +19,8 @@ function CSVUploader({ apps, onUploadSuccess }) {
 
         setIsUploading(true);
 
-        // --- NEW: Keywords to filter out ---
-        const ignoreKeywords = ['dev', 'staging', 'preproduction', 'qa'];
+        // --- NEW: Expanded list of keywords to ignore ---
+        const ignoreKeywords = ['dev', 'staging', 'preproduction', 'qa', 'preprod', 'private'];
 
         Papa.parse(selectedFile, {
             header: true,
@@ -29,9 +29,7 @@ function CSVUploader({ apps, onUploadSuccess }) {
             complete: async (results) => {
                 const recordsToCreate = [];
                 const recordsToUpdate = [];
-
-                // Create maps for quick lookups of existing apps by both name and ID
-                const existingAppNames = new Map(
+                const existingAppsMap = new Map(
                     apps.map(app => [app.fields['App Name']?.toLowerCase(), app])
                 );
                 const existingAppIds = new Map(
@@ -42,20 +40,18 @@ function CSVUploader({ apps, onUploadSuccess }) {
                     const appName = row['App Name']?.trim();
                     const appId = row['App ID']?.trim();
 
-                    if (!appName || !appId) continue; // Skip rows without a name or ID
+                    if (!appName || !appId) continue;
 
                     const lowercasedAppName = appName.toLowerCase();
 
-                    // --- NEW: Filter out rows containing ignore keywords ---
                     const containsIgnoreKeyword = ignoreKeywords.some(keyword => lowercasedAppName.includes(keyword));
                     if (containsIgnoreKeyword) {
-                        continue; // Skip this row
+                        continue;
                     }
 
-                    const existingApp = existingAppNames.get(lowercasedAppName) || existingAppIds.get(appId);
+                    const existingApp = existingAppsMap.get(lowercasedAppName) || existingAppIds.get(appId);
 
                     if (existingApp) {
-                        // If the app exists, prepare an update record only if there's an image URL
                         if (row['Image URL']) {
                             recordsToUpdate.push({
                                 id: existingApp.id,
@@ -63,7 +59,6 @@ function CSVUploader({ apps, onUploadSuccess }) {
                             });
                         }
                     } else {
-                        // If the app is new, prepare a create record
                         recordsToCreate.push({
                             fields: {
                                 'App Name': appName,
