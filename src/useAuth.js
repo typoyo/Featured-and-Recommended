@@ -1,40 +1,59 @@
-// src/useAuth.js
 import { useState, createContext, useContext, useMemo } from 'react';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  // On initial load, try to get the user session from localStorage
+  const [user, setUser] = useState(() => {
+    const savedSession = localStorage.getItem('userSession');
+    if (!savedSession) {
+      return null;
+    }
+
+    const { user, timestamp } = JSON.parse(savedSession);
+    const sessionAge = Date.now() - timestamp;
+    const eightHours = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+
+    // If the session is older than 8 hours, clear it
+    if (sessionAge > eightHours) {
+      localStorage.removeItem('userSession');
+      return null;
+    }
+
+    // Otherwise, the user is still logged in
+    return user;
+  });
 
   const login = (email, password) => {
-    // Get the comma-separated lists from environment variables
     const validEmailsString = process.env.REACT_APP_USER_EMAILS || '';
     const validPasswordsString = process.env.REACT_APP_USER_PASSWORDS || '';
 
-    // Split them into arrays
     const validEmails = validEmailsString.split(',');
     const validPasswords = validPasswordsString.split(',');
 
-    // Find the index of the entered email
     const userIndex = validEmails.findIndex(validEmail => validEmail === email);
 
-    // Check if the user exists and if the password at the same index matches
     if (userIndex !== -1 && validPasswords[userIndex] === password) {
-      setUser({ email });
-      return true; // Login successful
+      const userData = { email };
+      setUser(userData);
+      // Save the session to localStorage with a timestamp
+      localStorage.setItem('userSession', JSON.stringify({ user: userData, timestamp: Date.now() }));
+      return true;
     }
 
-    return false; // Login failed
+    return false;
   };
 
   const logout = () => {
     setUser(null);
+    // Clear the session from localStorage
+    localStorage.removeItem('userSession');
   };
-  
+
   const value = useMemo(() => ({
-      user,
-      login,
-      logout
+    user,
+    login,
+    logout
   }), [user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
