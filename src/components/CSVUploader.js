@@ -5,6 +5,7 @@ import base from '../airtable';
 function CSVUploader({ apps, onUploadSuccess }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
+    const [isUploading, setIsUploading] = useState(false); // New state for loading indicator
 
     const handleFileSelect = (e) => {
         setSelectedFile(e.target.files[0]);
@@ -15,6 +16,8 @@ function CSVUploader({ apps, onUploadSuccess }) {
             alert("Please select a file first.");
             return;
         }
+
+        setIsUploading(true); // Start loading indicator
 
         Papa.parse(selectedFile, {
             header: true,
@@ -29,19 +32,21 @@ function CSVUploader({ apps, onUploadSuccess }) {
 
                 for (const row of results.data) {
                     const appName = row['App Name']?.trim();
-                    if (!appName) continue; // Skip empty rows
+                    if (!appName) continue;
 
                     const lowercasedAppName = appName.toLowerCase();
                     const existingApp = existingAppsMap.get(lowercasedAppName);
 
                     if (existingApp) {
-                        recordsToUpdate.push({
-                            id: existingApp.id,
-                            fields: {
-                                'Image URL': row['Image URL'],
-                            },
-                        });
+                        // Prepare an update record only if there's an image URL
+                        if (row['Image URL']) {
+                            recordsToUpdate.push({
+                                id: existingApp.id,
+                                fields: { 'Image URL': row['Image URL'] },
+                            });
+                        }
                     } else {
+                        // Prepare a create record for a new app
                         recordsToCreate.push({
                             fields: {
                                 'App Name': appName,
@@ -54,8 +59,8 @@ function CSVUploader({ apps, onUploadSuccess }) {
                         });
                     }
                 }
-
-                // --- NEW: De-duplicate the update list ---
+                
+                // De-duplicate records before sending to Airtable
                 const uniqueRecordsToUpdate = Array.from(new Map(recordsToUpdate.map(record => [record.id, record])).values());
 
                 try {
@@ -73,12 +78,15 @@ function CSVUploader({ apps, onUploadSuccess }) {
                     }
 
                     alert(`Upload complete! \n- ${recordsToCreate.length} new apps created. \n- ${uniqueRecordsToUpdate.length} existing apps updated.`);
-                    onUploadSuccess();
-                    setIsModalOpen(false);
-                    setSelectedFile(null);
+                    
                 } catch (err) {
                     console.error(err);
                     alert(`An error occurred during the upload.`);
+                } finally {
+                    setIsUploading(false); // Stop loading indicator
+                    onUploadSuccess();
+                    setIsModalOpen(false);
+                    setSelectedFile(null);
                 }
             },
         });
@@ -94,18 +102,28 @@ function CSVUploader({ apps, onUploadSuccess }) {
             <button className="upload-button" onClick={openModal}>
                 Upload CSV
             </button>
+
             {isModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
-                        <h3>Upload New Apps CSV</h3>
-                        <p>Include "App Name", "App ID", "Partner Manager Name", and "Image URL" columns.</p>
-                        <input type="file" accept=".csv" onChange={handleFileSelect} />
-                        <div className="form-actions">
-                            <button type="button" className="cancel-button" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                            <button type="button" className="submit-button" onClick={handleProcessUpload} disabled={!selectedFile}>
-                                Upload File
-                            </button>
-                        </div>
+                        {isUploading ? (
+                            <div className="loading-container">
+                                <div className="spinner"></div>
+                                <p>Uploading, please wait...</p>
+                            </div>
+                        ) : (
+                            <>
+                                <h3>Upload New Apps CSV</h3>
+                                <p>Include "App Name", "App ID", "Partner Manager Name", and "Image URL" columns.</p>
+                                <input type="file" accept=".csv" onChange={handleFileSelect} />
+                                <div className="form-actions">
+                                    <button type="button" className="cancel-button" onClick={() => setIsModalOpen(false)}>Cancel</button>
+                                    <button type="button" className="submit-button" onClick={handleProcessUpload} disabled={!selectedFile}>
+                                        Upload File
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             )}

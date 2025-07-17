@@ -385,3 +385,27 @@ html, body, #root {
   border-radius: 6px;
   cursor: pointer;
 }
+
+/* --- New Loading Indicator Styles --- */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 20px;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #f3f3f3; /* Light grey */
+  border-top: 5px solid #3C64F4; /* Blue */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
