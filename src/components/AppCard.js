@@ -4,7 +4,7 @@ function AppCard({ app, onRemove, listType, dragHandleProps, onUpdateObligation,
   const appName = app.fields?.['App Name'] ?? 'No Name Provided';
   const appId = app.fields?.['App ID'] ?? 'No ID';
   const pmName = app.fields?.['Partner Manager Name'] ?? 'N/A';
-  const imageUrl = app.fields?.['Image URL']; // Get the image URL
+  const imageUrl = app.fields?.['Image URL'];
   const featuredCount = app.fields?.['Featured Count'] || 0;
   const featureObligation = app.fields?.['Feature Obligation'] || 1;
 
@@ -15,7 +15,6 @@ function AppCard({ app, onRemove, listType, dragHandleProps, onUpdateObligation,
     }
   };
 
-  // Determine if the app name is long to apply a smaller font size
   const isLongName = appName.length > 25;
 
   return (
@@ -26,14 +25,11 @@ function AppCard({ app, onRemove, listType, dragHandleProps, onUpdateObligation,
         </button>
       )}
 
-      {/* This div is now the main flex container for the left side */}
       <div className="app-info" {...dragHandleProps}>
-        {/* Conditionally render the image if a URL exists */}
         {imageUrl && (
           <img src={imageUrl} alt={`${appName} thumbnail`} className="app-thumbnail" />
         )}
         
-        {/* This wrapper keeps the name and dates stacked vertically */}
         <div className="app-name-wrapper">
           <h4 className={`app-name ${isLongName ? 'long-name' : ''}`}>{appName}</h4>
           {displayDates && (

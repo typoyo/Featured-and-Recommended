@@ -13,22 +13,16 @@ import { arrayMove } from '@dnd-kit/sortable';
 import moment from 'moment';
 import './FeaturedAppsManager.css';
 
-// --- NEW: A single, reusable sorting function ---
 const sortApps = (apps) => {
   const statusOrder = { "Currently Featured": 1, "Up Next": 2, "Backlog": 3 };
-  // Create a copy before sorting to avoid mutating the original array
   const sorted = [...apps].sort((a, b) => {
     const statusA = a.fields.Status;
     const statusB = b.fields.Status;
     const orderA = statusOrder[statusA] || 99;
     const orderB = statusOrder[statusB] || 99;
-
-    // 1. Sort by Status
     if (orderA !== orderB) {
       return orderA - orderB;
     }
-
-    // 2. Sort by the correct order field within each status
     if (statusA === 'Currently Featured' || statusA === 'Up Next') {
       return (a.fields.Queue_Order || 0) - (b.fields.Queue_Order || 0);
     }
@@ -39,7 +33,6 @@ const sortApps = (apps) => {
   });
   return sorted;
 };
-
 
 function FeaturedAppsManager() {
   const [apps, setApps] = useState([]);
@@ -62,7 +55,6 @@ function FeaturedAppsManager() {
             console.error(err);
             return;
           }
-          // Use the new, robust sorting function
           setApps(sortApps(records));
         }
       );
@@ -94,7 +86,6 @@ function FeaturedAppsManager() {
     setActiveApp(null);
     const { active, over } = event;
     if (!over) return;
-
     const activeApp = apps.find(app => app.id === active.id);
     const overId = over.id;
 
@@ -113,7 +104,6 @@ function FeaturedAppsManager() {
       const maxOrder = Math.max(-1, ...upNextApps.map(app => app.fields.Queue_Order || 0));
       const newQueueOrder = maxOrder + 1;
       
-      // Use the new sorting function for the optimistic update
       setApps(prevApps => {
         const updatedApps = prevApps.map(app =>
           app.id === active.id ? { ...app, fields: { ...app.fields, Status: 'Up Next', Queue_Order: newQueueOrder } } : app
@@ -130,14 +120,11 @@ function FeaturedAppsManager() {
     if (over.data?.current?.sortable?.containerId === 'backlog-column' && active.id !== over.id) {
         const oldIndex = apps.findIndex(app => app.id === active.id);
         const newIndex = apps.findIndex(app => app.id === over.id);
-
         const reorderedApps = arrayMove(apps, oldIndex, newIndex);
         setApps(reorderedApps);
-
         const updates = reorderedApps
           .filter(app => app.fields.Status === 'Backlog')
           .map((app, index) => ({ id: app.id, fields: { Order: index } }));
-
         for (let i = 0; i < updates.length; i += 10) {
           const chunk = updates.slice(i, i + 10);
           base(process.env.REACT_APP_AIRTABLE_TABLE_NAME).update(chunk);
@@ -177,20 +164,18 @@ function FeaturedAppsManager() {
   };
 
   const handlePromoteApps = async () => {
-    const upNextApps = apps.filter(app => app.fields.Status === 'Up Next'); // Already sorted
+    const upNextApps = apps.filter(app => app.fields.Status === 'Up Next');
     const currentlyFeaturedApps = apps.filter(app => app.fields.Status === 'Currently Featured');
     if (upNextApps.length === 0) {
       alert("There are no apps in the 'Up Next' column to promote.");
       return;
     }
-
     const today = moment();
     let startDate = today.clone().day(5);
     if (startDate.isBefore(today, 'day')) {
       startDate.add(1, 'week');
     }
     const endDate = startDate.clone().add(13, 'days');
-
     const updates = [];
     currentlyFeaturedApps.forEach(app => {
       updates.push({ id: app.id, fields: { 'Status': null, 'Queue_Order': null } });
