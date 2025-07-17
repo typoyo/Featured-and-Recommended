@@ -28,7 +28,7 @@ function CSVUploader({ apps, onUploadSuccess }) {
             complete: async (results) => {
                 const recordsToCreate = [];
                 const recordsToUpdate = [];
-                
+
                 const existingAppNames = new Map(
                     apps.map(app => [app.fields['App Name']?.toLowerCase(), app])
                 );
@@ -39,40 +39,43 @@ function CSVUploader({ apps, onUploadSuccess }) {
                 for (const row of results.data) {
                     const appName = row['App Name']?.trim();
                     const appId = row['App ID']?.trim();
-                    const imageUrl = row['Image URL']?.trim();
 
-                    if (!appName || !appId) continue;
+                    if (!appName && !appId) continue; // Must have at least a name or ID
 
-                    // --- NEW: Skip if the Image URL is incomplete ---
-                    if (!imageUrl || imageUrl.endsWith('/')) {
-                        continue;
+                    const lowercasedAppName = appName?.toLowerCase();
+
+                    if (appName) {
+                        const containsIgnoreKeyword = ignoreKeywords.some(keyword => lowercasedAppName.includes(keyword));
+                        if (containsIgnoreKeyword) {
+                            continue;
+                        }
                     }
-
-                    const lowercasedAppName = appName.toLowerCase();
-
-                    const containsIgnoreKeyword = ignoreKeywords.some(keyword => lowercasedAppName.includes(keyword));
-                    if (containsIgnoreKeyword) {
-                        continue; 
-                    }
-
+                    
                     let existingApp = existingAppIds.get(appId) || existingAppNames.get(lowercasedAppName);
 
                     if (existingApp) {
-                        recordsToUpdate.push({
-                            id: existingApp.id,
-                            fields: {
-                                'App Name': appName,
-                                'Partner Manager Name': row['Partner Manager Name'],
-                                'Image URL': imageUrl,
-                            },
-                        });
-                    } else {
+                        // --- NEW: Intelligently build the update object ---
+                        const fieldsToUpdate = {};
+                        if (row['App Name']) fieldsToUpdate['App Name'] = appName;
+                        if (row['App ID']) fieldsToUpdate['App ID'] = appId;
+                        if (row['Partner Manager Name']) fieldsToUpdate['Partner Manager Name'] = row['Partner Manager Name'];
+                        if (row['Image URL']) fieldsToUpdate['Image URL'] = row['Image URL'];
+                        
+                        // Only add to the update list if there's something to update
+                        if (Object.keys(fieldsToUpdate).length > 0) {
+                            recordsToUpdate.push({
+                                id: existingApp.id,
+                                fields: fieldsToUpdate,
+                            });
+                        }
+
+                    } else if (appName && appId) { // Only create if both primary fields exist
                         recordsToCreate.push({
                             fields: {
                                 'App Name': appName,
                                 'App ID': appId,
                                 'Partner Manager Name': row['Partner Manager Name'],
-                                'Image URL': imageUrl,
+                                'Image URL': row['Image URL'],
                                 'Featured Count': 0,
                                 'Feature Obligation': 1,
                             },
@@ -132,7 +135,7 @@ function CSVUploader({ apps, onUploadSuccess }) {
                         ) : (
                             <>
                                 <h3>Upload New Apps CSV</h3>
-                                <p>Include "App Name", "App ID", "Partner Manager Name", and "Image URL" columns.</p>
+                                <p>Provide columns like "App Name", "App ID", etc. to create or update records.</p>
                                 <input type="file" accept=".csv" onChange={handleFileSelect} />
                                 <div className="form-actions">
                                     <button type="button" className="cancel-button" onClick={() => setIsModalOpen(false)}>Cancel</button>
