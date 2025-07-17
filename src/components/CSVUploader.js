@@ -19,79 +19,54 @@ function CSVUploader({ apps, onUploadSuccess }) {
 
         setIsUploading(true);
 
-        const ignoreKeywords = ['dev', 'staging', 'preproduction', 'qa', 'preprod', 'private', 'sandbox'];
-
         Papa.parse(selectedFile, {
             header: true,
             skipEmptyLines: true,
             transformHeader: header => header.trim(),
             complete: async (results) => {
-                const recordsToCreate = [];
                 const recordsToUpdate = [];
-
-                const existingAppNames = new Map(
-                    apps.map(app => [app.fields['App Name']?.toLowerCase(), app])
-                );
+                
+                // Create a map of existing apps by their unique App ID for efficient lookups
                 const existingAppIds = new Map(
                     apps.map(app => [app.fields['App ID'], app])
                 );
 
                 for (const row of results.data) {
-                    const appName = row['App Name']?.trim();
                     const appId = row['App ID']?.trim();
 
-                    if (!appName && !appId) continue; // Must have at least a name or ID
-
-                    const lowercasedAppName = appName?.toLowerCase();
-
-                    if (appName) {
-                        const containsIgnoreKeyword = ignoreKeywords.some(keyword => lowercasedAppName.includes(keyword));
-                        if (containsIgnoreKeyword) {
-                            continue;
-                        }
-                    }
+                    // If there's no App ID, we can't do anything, so skip.
+                    if (!appId) continue;
                     
-                    let existingApp = existingAppIds.get(appId) || existingAppNames.get(lowercasedAppName);
+                    const existingApp = existingAppIds.get(appId);
 
+                    // --- NEW: Only proceed if the app already exists ---
                     if (existingApp) {
-                        // --- NEW: Intelligently build the update object ---
                         const fieldsToUpdate = {};
-                        if (row['App Name']) fieldsToUpdate['App Name'] = appName;
-                        if (row['App ID']) fieldsToUpdate['App ID'] = appId;
+
+                        // Add fields to the update object only if they exist in the CSV row
+                        if (row['App Name']) fieldsToUpdate['App Name'] = row['App Name'].trim();
                         if (row['Partner Manager Name']) fieldsToUpdate['Partner Manager Name'] = row['Partner Manager Name'];
-                        if (row['Image URL']) fieldsToUpdate['Image URL'] = row['Image URL'];
                         
-                        // Only add to the update list if there's something to update
+                        const imageUrl = row['Image URL']?.trim();
+                        // Only add the image URL if it's valid and not just a base path
+                        if (imageUrl && !imageUrl.endsWith('/')) {
+                            fieldsToUpdate['Image URL'] = imageUrl;
+                        }
+
+                        // Only add to the update list if there is at least one field to change
                         if (Object.keys(fieldsToUpdate).length > 0) {
                             recordsToUpdate.push({
                                 id: existingApp.id,
                                 fields: fieldsToUpdate,
                             });
                         }
-
-                    } else if (appName && appId) { // Only create if both primary fields exist
-                        recordsToCreate.push({
-                            fields: {
-                                'App Name': appName,
-                                'App ID': appId,
-                                'Partner Manager Name': row['Partner Manager Name'],
-                                'Image URL': row['Image URL'],
-                                'Featured Count': 0,
-                                'Feature Obligation': 1,
-                            },
-                        });
                     }
+                    // If the app does not exist, do nothing.
                 }
                 
                 const uniqueRecordsToUpdate = Array.from(new Map(recordsToUpdate.map(record => [record.id, record])).values());
 
                 try {
-                    if (recordsToCreate.length > 0) {
-                        for (let i = 0; i < recordsToCreate.length; i += 10) {
-                            const chunk = recordsToCreate.slice(i, i + 10);
-                            await base(process.env.REACT_APP_AIRTABLE_TABLE_NAME).create(chunk);
-                        }
-                    }
                     if (uniqueRecordsToUpdate.length > 0) {
                         for (let i = 0; i < uniqueRecordsToUpdate.length; i += 10) {
                             const chunk = uniqueRecordsToUpdate.slice(i, i + 10);
@@ -99,7 +74,7 @@ function CSVUploader({ apps, onUploadSuccess }) {
                         }
                     }
 
-                    alert(`Upload complete! \n- ${recordsToCreate.length} new apps created. \n- ${uniqueRecordsToUpdate.length} existing apps updated.`);
+                    alert(`Upload complete! \n- ${uniqueRecordsToUpdate.length} existing apps updated. \n- No new apps were created.`);
                     
                 } catch (err) {
                     console.error(err);
@@ -134,8 +109,8 @@ function CSVUploader({ apps, onUploadSuccess }) {
                             </div>
                         ) : (
                             <>
-                                <h3>Upload New Apps CSV</h3>
-                                <p>Provide columns like "App Name", "App ID", etc. to create or update records.</p>
+                                <h3>Update Existing Apps</h3>
+                                <p>Provide a CSV with an "App ID" column to update records. Other columns are optional.</p>
                                 <input type="file" accept=".csv" onChange={handleFileSelect} />
                                 <div className="form-actions">
                                     <button type="button" className="cancel-button" onClick={() => setIsModalOpen(false)}>Cancel</button>
