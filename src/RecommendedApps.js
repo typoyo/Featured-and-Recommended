@@ -2,14 +2,233 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import './RecommendedApps.css';
 
-// ... (Airtable config and other constants remain the same) ...
-
-const AppItem = ({ app, type, date, onAction }) => {
-    // ... (AppItem helper component remains the same) ...
+// --- Airtable Configuration ---
+const AIRTABLE_API_KEY = process.env.REACT_APP_AIRTABLE_PERSONAL_ACCESS_TOKEN;
+const AIRTABLE_BASE_ID = 'appkJQtIU04DiK9f5';
+const APPS_TABLE_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/Apps`;
+const STATE_TABLE_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/State`;
+const airtableHeaders = {
+    'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+    'Content-Type': 'application/json'
 };
 
+// --- Helper Component for App Items ---
+const AppItem = ({ app, type, date, onAction }) => {
+    const handleCopy = (e) => {
+        const idToCopy = app.appId;
+        navigator.clipboard.writeText(idToCopy).then(() => {
+            const badge = e.currentTarget;
+            const originalText = badge.textContent;
+            badge.textContent = 'Copied!';
+            badge.classList.add('copied');
+            setTimeout(() => {
+                badge.textContent = originalText;
+                badge.classList.remove('copied');
+            }, 1500);
+        });
+    };
+
+    return (
+        <div className="rec-app-card">
+            <div className="rec-app-info">
+                <h4 className="rec-app-name">{app.appName}</h4>
+                {date && <p className="rec-feature-dates">{type === 'current' ? 'Due:' : 'Starts:'} {date}</p>}
+                {type === 'previous' && app.completedDate && <p className="rec-feature-dates">Completed: {app.completedDate}</p>}
+            </div>
+            <div className="rec-app-actions">
+                <button onClick={handleCopy} className="rec-app-id-button">{app.appId}</button>
+                {type === 'search' && (
+                    <button className="rec-action-button add" onClick={() => onAction('add', app.appId)}>
+                        <i className="bds-icon bds-add"></i>
+                    </button>
+                )}
+                {type === 'queue' && (
+                    <button className="rec-action-button remove" onClick={() => onAction('remove', app.appId)}>
+                        &times;
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+};
+
+// --- Main Component ---
 function RecommendedApps() {
-    // ... (All state and functions like fetchData, handleAction, etc. remain the same) ...
+    const [masterAppList, setMasterAppList] = useState([]);
+    const [appState, setAppState] = useState({ recordId: null, currentRotation: [], upNextApps: [], previousApps: [] });
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [isQueueExpanded, setIsQueueExpanded] = useState(false);
+    const fileInputRef = useRef(null);
+
+    const fetchData = useCallback(async () => {
+        setIsSyncing(true);
+        try {
+            let allAppRecords = [];
+            let offset = null;
+            do {
+                const url = offset ? `${APPS_TABLE_URL}?offset=${offset}` : APPS_TABLE_URL;
+                const response = await fetch(url, { headers: airtableHeaders });
+                const data = await response.json();
+                allAppRecords.push(...data.records);
+                offset = data.offset;
+            } while (offset);
+            
+            const uniqueApps = Array.from(new Map(allAppRecords.map(app => [app.fields.appId, app])).values());
+            setMasterAppList(uniqueApps.map(r => ({ id: r.id, ...r.fields })));
+
+            const stateResponse = await fetch(STATE_TABLE_URL, { headers: airtableHeaders });
+            const stateData = await stateResponse.json();
+            if (stateData.records.length > 0) {
+                const record = stateData.records[0];
+                setAppState({
+                    recordId: record.id,
+                    currentRotation: JSON.parse(record.fields.currentRotation || '[]'),
+                    upNextApps: JSON.parse(record.fields.upNextApps || '[]'),
+                    previousApps: JSON.parse(record.fields.previousApps || '[]'),
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching data:", error);
+            alert("Could not fetch data from Airtable.");
+        } finally {
+            setIsSyncing(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    const updateAirtableState = useCallback(async (newState) => {
+        if (!appState.recordId) return;
+        try {
+            await fetch(`${STATE_TABLE_URL}/${appState.recordId}`, {
+                method: 'PATCH',
+                headers: airtableHeaders,
+                body: JSON.stringify({ fields: newState })
+            });
+            await fetchData();
+        } catch (error) {
+            console.error("Error updating Airtable state:", error);
+            alert("Could not save changes to Airtable.");
+        }
+    }, [appState.recordId, fetchData]);
+
+    const handleAction = (action, appId) => {
+        if (action === 'add') {
+            const appToAdd = masterAppList.find(app => app.appId === appId);
+            const isAlreadyInUse = appState.upNextApps.some(app => app.appId === appId) || appState.currentRotation.some(app => app.appId === appId);
+            if (appToAdd && !isAlreadyInUse) {
+                const updatedQueue = [...appState.upNextApps, appToAdd];
+                updateAirtableState({ upNextApps: JSON.stringify(updatedQueue) });
+            } else {
+                alert("This app is already in use.");
+            }
+        }
+        if (action === 'remove') {
+            const updatedQueue = appState.upNextApps.filter(app => app.appId !== appId);
+            updateAirtableState({ upNextApps: JSON.stringify(updatedQueue) });
+        }
+    };
+
+    const handleManualAdd = async () => {
+        const newAppName = prompt("Enter the new App Name:");
+        if (!newAppName) return;
+        const newAppId = prompt("Enter the new App ID:");
+        if (!newAppId) return;
+        const trimmedAppId = newAppId.trim();
+        if (masterAppList.some(app => app.appId === trimmedAppId)) {
+            return alert(`Error: App ID "${trimmedAppId}" already exists.`);
+        }
+        try {
+            await fetch(APPS_TABLE_URL, {
+                method: 'POST',
+                headers: airtableHeaders,
+                body: JSON.stringify({ records: [{ fields: { appId: trimmedAppId, appName: newAppName.trim() } }] })
+            });
+            alert(`Success: "${newAppName}" has been added.`);
+            fetchData();
+        } catch (error) {
+            alert("Could not add app to Airtable.");
+        }
+    };
+
+    const handleFileUpload = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(worksheet);
+                const appsToUpload = json.map(row => {
+                    const idKey = Object.keys(row).find(k => k.toLowerCase().includes('app id'));
+                    const nameKey = Object.keys(row).find(k => k.toLowerCase().includes('app name'));
+                    if (idKey && nameKey) {
+                        const appId = String(row[idKey]).trim();
+                        const appName = String(row[nameKey]).trim();
+                        if (appId && appName && !masterAppList.some(app => app.appId === appId)) {
+                            return { fields: { appId, appName } };
+                        }
+                    }
+                    return null;
+                }).filter(Boolean);
+                if (appsToUpload.length > 0) {
+                    for (let i = 0; i < appsToUpload.length; i += 10) {
+                        const chunk = appsToUpload.slice(i, i + 10);
+                        await fetch(APPS_TABLE_URL, {
+                            method: 'POST',
+                            headers: airtableHeaders,
+                            body: JSON.stringify({ records: chunk })
+                        });
+                    }
+                    alert(`Upload complete! ${appsToUpload.length} new apps added.`);
+                    fetchData();
+                } else {
+                    alert("Upload complete! No new apps were found to add.");
+                }
+            } catch (error) {
+                alert("Upload Failed!");
+            } finally {
+                if(fileInputRef.current) fileInputRef.current.value = '';
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    };
+    
+    const handlePromote = () => {
+        if (appState.currentRotation.length > 0) return alert("Cannot promote. The current rotation is not empty.");
+        const appsToPromote = appState.upNextApps.slice(0, 3);
+        const remainingInQueue = appState.upNextApps.slice(3);
+        updateAirtableState({
+            currentRotation: JSON.stringify(appsToPromote),
+            upNextApps: JSON.stringify(remainingInQueue)
+        });
+    };
+
+    const handleComplete = () => {
+        if (window.confirm("Are you sure you want to complete the current rotation?")) {
+            const completedDate = new Date().toLocaleDateString();
+            const completedApps = appState.currentRotation.map(app => ({...app, completedDate}));
+            const updatedPreviousApps = [...appState.previousApps, ...completedApps];
+            updateAirtableState({
+                previousApps: JSON.stringify(updatedPreviousApps),
+                currentRotation: '[]'
+            });
+        }
+    };
+
+    const searchResults = searchTerm.length > 1
+        ? masterAppList.filter(app => {
+            const appName = app.appName?.toLowerCase() || '';
+            const appId = app.appId?.toLowerCase() || '';
+            const term = searchTerm.toLowerCase();
+            return appName.includes(term) || appId.includes(term);
+          })
+        : [];
 
     return (
         <div className="rec-app-container">
