@@ -4,16 +4,19 @@ function AppCard({ app, onRemove, listType, dragHandleProps, onUpdateObligation,
   const appName = app.fields?.['App Name'] ?? 'No Name Provided';
   const appId = app.fields?.['App ID'] ?? 'No ID';
   const pmName = app.fields?.['Partner Manager Name'] ?? 'N/A';
+  const imageUrl = app.fields?.['Image URL']; // Get the image URL
   const featuredCount = app.fields?.['Featured Count'] || 0;
   const featureObligation = app.fields?.['Feature Obligation'] || 1;
 
   const copyToClipboard = () => {
     if (appId && appId !== 'No ID') {
-      // The .then() that created the alert has been removed.
       navigator.clipboard.writeText(appId)
         .catch(err => console.error('Failed to copy: ', err));
     }
   };
+
+  // Determine if the app name is long to apply a smaller font size
+  const isLongName = appName.length > 25;
 
   return (
     <div className="app-card">
@@ -23,13 +26,22 @@ function AppCard({ app, onRemove, listType, dragHandleProps, onUpdateObligation,
         </button>
       )}
 
+      {/* This div is now the main flex container for the left side */}
       <div className="app-info" {...dragHandleProps}>
-        <h4 className="app-name">{appName}</h4>
-        {displayDates && (
-          <p className={listType === 'Currently Featured' ? 'feature-dates current-dates' : 'feature-dates future-dates'}>
-            {displayDates.start} &ndash; {displayDates.end}
-          </p>
+        {/* Conditionally render the image if a URL exists */}
+        {imageUrl && (
+          <img src={imageUrl} alt={`${appName} thumbnail`} className="app-thumbnail" />
         )}
+        
+        {/* This wrapper keeps the name and dates stacked vertically */}
+        <div className="app-name-wrapper">
+          <h4 className={`app-name ${isLongName ? 'long-name' : ''}`}>{appName}</h4>
+          {displayDates && (
+            <p className={listType === 'Currently Featured' ? 'feature-dates current-dates' : 'feature-dates future-dates'}>
+              {displayDates.start} &ndash; {displayDates.end}
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="app-actions">

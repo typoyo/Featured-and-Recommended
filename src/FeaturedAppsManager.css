@@ -4,6 +4,13 @@ html, body, #root {
   overflow: hidden;
 }
 
+body {
+  background-color: #f4f7f9;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+}
+
 .app-container {
   display: flex;
   flex-direction: column;
@@ -84,10 +91,22 @@ html, body, #root {
 .app-card .app-info {
   flex-grow: 1;
   cursor: grab;
+  /* New: Use flexbox to align image and text */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0; /* Prevents long text from pushing other elements */
 }
 
 .app-card .app-info:active {
   cursor: grabbing;
+}
+
+/* New: Wrapper for name and dates */
+.app-name-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .app-card .app-name {
@@ -96,6 +115,15 @@ html, body, #root {
   color: #2c3e50;
   margin: 0;
   line-height: 1.2;
+  /* New: Prevent long text from wrapping badly */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* New: Style for long app names */
+.app-card .app-name.long-name {
+  font-size: 0.95rem;
 }
 
 .app-card .app-actions {
@@ -175,7 +203,6 @@ html, body, #root {
 .promote-button {
    background-color: #28a745;
 }
-
 
 .modal-overlay {
   position: fixed;
@@ -386,26 +413,13 @@ html, body, #root {
   cursor: pointer;
 }
 
-/* --- New Loading Indicator Styles --- */
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  gap: 20px;
-}
-
-.spinner {
-  width: 48px;
-  height: 48px;
-  border: 5px solid #f3f3f3; /* Light grey */
-  border-top: 5px solid #3C64F4; /* Blue */
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+/* --- New Styles for App Thumbnails --- */
+.app-thumbnail {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+  background-color: #e9ecef;
+  border: 1px solid #dee2e6;
+  flex-shrink: 0; /* Prevents the image from shrinking */
 }
