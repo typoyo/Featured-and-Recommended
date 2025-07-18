@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Papa from 'papaparse';
-import base from '../airtable';
+import base from '../airtable'; // Corrected path
 
 function CSVUploader({ apps, onUploadSuccess }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,7 +18,6 @@ function CSVUploader({ apps, onUploadSuccess }) {
         }
 
         setIsUploading(true);
-
         const ignoreKeywords = ['dev', 'staging', 'preproduction', 'qa', 'preprod', 'private', 'sandbox'];
 
         Papa.parse(selectedFile, {
@@ -28,10 +27,7 @@ function CSVUploader({ apps, onUploadSuccess }) {
             complete: async (results) => {
                 const recordsToCreate = [];
                 const recordsToUpdate = [];
-                
-                const existingAppIds = new Map(
-                    apps.map(app => [app.fields['App ID'], app])
-                );
+                const existingAppIds = new Map(apps.map(app => [app.fields['App ID'], app]));
 
                 for (const row of results.data) {
                     const appName = row['App Name']?.trim();
@@ -41,9 +37,7 @@ function CSVUploader({ apps, onUploadSuccess }) {
 
                     const lowercasedAppName = appName.toLowerCase();
                     const containsIgnoreKeyword = ignoreKeywords.some(keyword => lowercasedAppName.includes(keyword));
-                    if (containsIgnoreKeyword) {
-                        continue; 
-                    }
+                    if (containsIgnoreKeyword) continue;
                     
                     const existingApp = existingAppIds.get(appId);
 
@@ -65,7 +59,6 @@ function CSVUploader({ apps, onUploadSuccess }) {
                         }
                     } else {
                         const imageUrl = row['Image URL']?.trim();
-                        // Only create a new record if it has a valid Image URL
                         if (imageUrl && !imageUrl.endsWith('/')) {
                              recordsToCreate.push({
                                 fields: {

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import base from './airtable';
+import base from '../airtable'; // Corrected path
 
 function SearchToAdd({ apps, onAppAdded }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -51,7 +51,7 @@ function SearchToAdd({ apps, onAppAdded }) {
       onAppAdded();
     } catch (err) {
       console.error(err);
-      alert('Failed to add app to backlog.');
+      alert('Failed to move app to backlog.');
     }
   };
 
