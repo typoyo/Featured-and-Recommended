@@ -1,16 +1,4 @@
-html, body, #root {
-  height: 100%;
-  margin: 0;
-  overflow: hidden;
-}
-
-body {
-  background-color: #f4f7f9;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-}
-
+/* --- Styles for Featured Apps Manager --- */
 .app-container {
   display: flex;
   flex-direction: column;
@@ -19,7 +7,7 @@ body {
   box-sizing: border-box;
 }
 
-.main-header {
+.app-container .main-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -27,19 +15,19 @@ body {
   flex-shrink: 0;
 }
 
-.main-header h1 {
+.app-container .main-header h1 {
   font-size: 1.75rem;
   margin: 0;
 }
 
-.main-content {
+.app-container .main-content {
   display: flex;
   gap: 20px;
   flex-grow: 1;
   min-height: 0;
 }
 
-.column {
+.app-container .column {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -50,7 +38,7 @@ body {
   border: 1px solid #e1e1e1;
 }
 
-.column-header {
+.app-container .column-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -58,7 +46,7 @@ body {
   flex-shrink: 0;
 }
 
-.column-header h2 {
+.app-container .column-header h2 {
   border-bottom: none;
   padding-bottom: 0;
   margin: 0;
@@ -66,7 +54,7 @@ body {
   font-weight: 600;
 }
 
-.apps-list {
+.app-container .apps-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -101,7 +89,7 @@ body {
   cursor: grabbing;
 }
 
-.app-name-wrapper {
+.app-card .app-name-wrapper {
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -441,4 +429,27 @@ body {
 
 .sync-button .bds-icon {
   font-size: 1.2em;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 20px;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #3C64F4;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

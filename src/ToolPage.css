@@ -1,3 +1,4 @@
+/* --- Global Styles --- */
 .tool-page-container {
   display: flex;
   flex-direction: column;
@@ -5,7 +6,6 @@
   width: 100vw;
   background-color: #f4f7f9;
 }
-
 .tabs-nav {
   display: flex;
   border-bottom: 2px solid #e1e4e8;
@@ -13,7 +13,6 @@
   background-color: #ffffff;
   flex-shrink: 0;
 }
-
 .tabs-nav button {
   padding: 12px 20px;
   border: none;
@@ -26,31 +25,53 @@
   margin-bottom: -2px;
   transition: all 0.2s ease-in-out;
 }
-
 .tabs-nav button.active {
   color: #3C64F4;
   border-bottom-color: #3C64F4;
 }
-
 .tab-content {
   flex-grow: 1;
   overflow: hidden;
-  position: relative; /* Needed for positioning panes */
+  position: relative;
 }
-
-/* New styles for tab panes */
 .tab-pane {
-  display: none; /* Hide inactive tabs by default */
+  display: none;
   width: 100%;
   height: 100%;
   position: absolute;
 }
-
 .tab-pane.active {
-  display: block; /* Show the active tab */
+  display: block;
 }
 
-.iframe-container {
-    width: 100%;
-    height: 100%;
+/* --- Global Login/Logout Styles --- */
+.login-modal {
+  max-width: 400px;
+}
+.login-error {
+  color: #D93F4C;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 10px;
+}
+.login-footer-message {
+  font-size: 0.8rem;
+  color: #67748B;
+  text-align: center;
+  margin-top: 20px;
+  border-top: 1px solid #E4E8F0;
+  padding-top: 15px;
+}
+.logout-button {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  z-index: 2000;
+  background-color: #5E637A;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
 }
