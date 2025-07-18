@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import base from '../airtable';
 
 function SearchToAdd({ apps, onAppAdded }) {
@@ -6,13 +6,12 @@ function SearchToAdd({ apps, onAppAdded }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [randomSuggestions, setRandomSuggestions] = useState([]);
 
-  const availableApps = useMemo(() => {
-    return apps.filter(app => !app.fields.Status || app.fields.Status === 'Archived');
-  }, [apps]);
-
+  // --- LOGIC CHANGE IS HERE ---
+  // Instead of filtering, we now consider all apps to be unique and searchable.
   const uniqueAvailableApps = useMemo(() => {
     const seenNames = new Set();
-    return availableApps.filter(app => {
+    // We filter the main 'apps' list to get a unique list by name.
+    return apps.filter(app => {
       const appName = app.fields['App Name']?.toLowerCase();
       if (appName && !seenNames.has(appName)) {
         seenNames.add(appName);
@@ -20,9 +19,8 @@ function SearchToAdd({ apps, onAppAdded }) {
       }
       return false;
     });
-  }, [availableApps]);
+  }, [apps]);
 
-  // --- New: Generate random suggestions when modal opens ---
   useEffect(() => {
     if (isModalOpen) {
       const shuffled = [...uniqueAvailableApps].sort(() => 0.5 - Math.random());
@@ -36,6 +34,7 @@ function SearchToAdd({ apps, onAppAdded }) {
       return [];
     }
     const lowercasedSearchTerm = searchTerm.toLowerCase();
+    // The search now filters from the list of all unique apps.
     return uniqueAvailableApps.filter(app => {
       const appName = app.fields['App Name']?.toLowerCase() || '';
       const appId = app.fields['App ID']?.toLowerCase() || '';
@@ -46,18 +45,18 @@ function SearchToAdd({ apps, onAppAdded }) {
     });
   }, [searchTerm, uniqueAvailableApps]);
 
-  // Determine which list to show: search results or random suggestions
   const appsToDisplay = searchTerm ? filteredApps : randomSuggestions;
 
   const handleAddToBacklog = async (appId) => {
     try {
+      // This function will now MOVE the app to the backlog
       await base(process.env.REACT_APP_AIRTABLE_TABLE_NAME).update(appId, {
         Status: 'Backlog',
       });
       onAppAdded();
     } catch (err) {
       console.error(err);
-      alert('Failed to add app to backlog.');
+      alert('Failed to move app to backlog.');
     }
   };
 
@@ -71,7 +70,7 @@ function SearchToAdd({ apps, onAppAdded }) {
         <div className="modal-overlay">
           <div className="modal-content">
             <h3>Search and Add to Backlog</h3>
-            <p>Start typing to find available apps, or add a suggestion below.</p>
+            <p>Search for any app to move it to the backlog.</p>
             <input
               type="text"
               placeholder="Search by App, ID, or PM..."
@@ -91,7 +90,6 @@ function SearchToAdd({ apps, onAppAdded }) {
                   </li>
                 ))
               ) : (
-                // Only show "No results" if the user has actually typed something
                 searchTerm && <li className="no-results-message">No apps found.</li>
               )}
             </ul>
