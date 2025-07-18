@@ -89,7 +89,7 @@ function FeaturedAppsManager() {
     const activeApp = apps.find(app => app.id === active.id);
     const overId = over.id;
 
-    if (overId === 'up-next-column' && activeApp.fields.Status === 'Backlog') {
+    if (overId === 'up-next-column') {
       const upNextApps = apps.filter(app => app.fields.Status === 'Up Next');
       if (upNextApps.length >= 8) {
         alert('The "Up Next" column is full.');
@@ -104,17 +104,12 @@ function FeaturedAppsManager() {
       const maxOrder = Math.max(-1, ...upNextApps.map(app => app.fields.Queue_Order || 0));
       const newQueueOrder = maxOrder + 1;
 
-      setApps(prevApps => {
-        const updatedApps = prevApps.map(app =>
-          app.id === active.id ? { ...app, fields: { ...app.fields, Status: 'Up Next', Queue_Order: newQueueOrder } } : app
-        );
-        return sortApps(updatedApps);
-      });
-
+      // Update state and Airtable, now also setting IsInBacklog to false
       base(process.env.REACT_APP_AIRTABLE_TABLE_NAME).update(active.id, {
-        'Status': 'Up Next',
-        'Queue_Order': newQueueOrder
-      });
+          'Status': 'Up Next',
+          'Queue_Order': newQueueOrder,
+          'IsInBacklog': false // Remove from backlog when moved to Up Next
+      }).then(fetchApps);
     }
 
     if (over.data?.current?.sortable?.containerId === 'backlog-column' && active.id !== over.id) {
@@ -134,7 +129,7 @@ function FeaturedAppsManager() {
 
   const handleRemoveFromBacklog = async (appId) => {
     try {
-      await base(process.env.REACT_APP_AIRTABLE_TABLE_NAME).update(appId, { "Status": null, "Queue_Order": null, "Order": null });
+      await base(process.env.REACT_APP_AIRTABLE_TABLE_NAME).update(appId, { "IsInBacklog": false });
       fetchApps();
     } catch (err) {
       console.error(err);
@@ -206,7 +201,7 @@ function FeaturedAppsManager() {
 
   const currentlyFeaturedApps = apps.filter(app => app.fields.Status === 'Currently Featured');
   const upNextApps = apps.filter(app => app.fields.Status === 'Up Next');
-  const backlogApps = apps.filter(app => app.fields.Status === 'Backlog');
+  const backlogApps = apps.filter(app => app.fields.IsInBacklog);
 
   let currentRotationDates = null;
   const currentRotationStartObj = currentlyFeaturedApps.length > 0 ? moment(currentlyFeaturedApps[0].fields['Start Date']) : null;

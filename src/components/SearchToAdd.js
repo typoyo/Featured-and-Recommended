@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react'; // Corrected import
-import base from '../airtable';
+import React, { useState, useMemo, useEffect } from 'react';
+import base from './airtable';
 
 function SearchToAdd({ apps, onAppAdded }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,12 +46,12 @@ function SearchToAdd({ apps, onAppAdded }) {
   const handleAddToBacklog = async (appId) => {
     try {
       await base(process.env.REACT_APP_AIRTABLE_TABLE_NAME).update(appId, {
-        Status: 'Backlog',
+        'IsInBacklog': true,
       });
       onAppAdded();
     } catch (err) {
       console.error(err);
-      alert('Failed to move app to backlog.');
+      alert('Failed to add app to backlog.');
     }
   };
 
