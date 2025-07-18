@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react'; // Corrected import
 import base from '../airtable';
 
 function SearchToAdd({ apps, onAppAdded }) {
@@ -6,11 +6,8 @@ function SearchToAdd({ apps, onAppAdded }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [randomSuggestions, setRandomSuggestions] = useState([]);
 
-  // --- LOGIC CHANGE IS HERE ---
-  // Instead of filtering, we now consider all apps to be unique and searchable.
   const uniqueAvailableApps = useMemo(() => {
     const seenNames = new Set();
-    // We filter the main 'apps' list to get a unique list by name.
     return apps.filter(app => {
       const appName = app.fields['App Name']?.toLowerCase();
       if (appName && !seenNames.has(appName)) {
@@ -34,7 +31,6 @@ function SearchToAdd({ apps, onAppAdded }) {
       return [];
     }
     const lowercasedSearchTerm = searchTerm.toLowerCase();
-    // The search now filters from the list of all unique apps.
     return uniqueAvailableApps.filter(app => {
       const appName = app.fields['App Name']?.toLowerCase() || '';
       const appId = app.fields['App ID']?.toLowerCase() || '';
@@ -49,7 +45,6 @@ function SearchToAdd({ apps, onAppAdded }) {
 
   const handleAddToBacklog = async (appId) => {
     try {
-      // This function will now MOVE the app to the backlog
       await base(process.env.REACT_APP_AIRTABLE_TABLE_NAME).update(appId, {
         Status: 'Backlog',
       });
